@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    restart: unless-stopped
+    volumes:
+      - ./user-service:/var/www
+    working_dir: /var/www
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+    networks:
+      - ecommerce
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    restart: unless-stopped
+    volumes:
+      - ./product-service:/var/www
+    working_dir: /var/www
+    ports:
+      - "8002:8000"
+    depends_on:
+      - db
+    networks:
+      - ecommerce
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    restart: unless-stopped
+    volumes:
+      - ./order-service:/var/www
+    working_dir: /var/www
+    ports:
+      - "8003:8000"
+    depends_on:
+      - db
+    networks:
+      - ecommerce
+
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ecommerce
+
+networks:
+  ecommerce:
+
+volumes:
+  mysql_data:
