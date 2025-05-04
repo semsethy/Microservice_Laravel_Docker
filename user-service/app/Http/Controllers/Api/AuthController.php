@@ -23,44 +23,59 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            "email" => "required|email",
-            "password" => "required"
-        ]);
+        try {
+            $request->validate([
+                "email" => "required|email",
+                "password" => "required"
+            ]);
 
-        // Check if the credentials are valid
-        if (!$token = JWTAuth::attempt($request->only("email", "password"))) {
+            if (!$token = JWTAuth::attempt($request->only("email", "password"))) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Invalid Credentials"
+                ], 401);
+            }
+
+            $user = Auth::user(); // Get the logged-in user
+
+            return response()->json([
+                "status" => true,
+                "message" => "User Logged In",
+                "token" => $token,
+                "role" => $user->role, // 'admin' or 'customer'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 "status" => false,
-                "message" => "Invalid Credentials"
-            ], 401);
+                "message" => "Validation failed",
+                "errors" => $e->errors()
+            ], 422);
         }
-
-        // Return the JWT token
-        return response()->json([
-            "status" => true,
-            "message" => "User Logged In",
-            "token" => $token
-        ]);
     }
+
 
     public function register(Request $request)
     {
-        $data = $request->validate([
-            "name" => "required|string",
-            "email" => "required|email|unique:users,email",
-            "password" => "required",
-        ]);
-
-        // Hash the password before storing it
-        $data['password'] = bcrypt($data['password']);
-
-        User::create($data);
-
-        return response()->json([
-            "status" => true,
-            "message" => "User registered successfully"
-        ]);
+        try {
+            $data = $request->validate([
+                "name" => "required|string",
+                "email" => "required|email|unique:users,email",
+                "password" => "required",
+            ]);
+    
+            // Hash the password before storing it
+            $data['password'] = bcrypt($data['password']);
+    
+            User::create($data);
+    
+            return response()->json([
+                "status" => true,
+                "message" => "User registered successfully"
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 422);
+        }
     }
 
     public function logout()
@@ -86,9 +101,11 @@ class AuthController extends Controller
 
     public function me()
     {
+        $user = Auth::user();
         return response()->json([
             'status' => 'success',
-            'user' => Auth::user(),
+            'user' => $user,
+            'role' => $user->role,
         ]);
     }
 }

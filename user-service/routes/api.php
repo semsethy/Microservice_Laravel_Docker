@@ -20,3 +20,12 @@ Route::middleware('jwt.auth')->group(function () {
 });
 
 
+// Only accessible by admins
+Route::middleware(['jwt.auth', 'role:admin'])->group(function () {
+    
+});
+
+// Only accessible by customers
+Route::middleware(['jwt.auth', 'role:customer'])->group(function () {
+    
+});
